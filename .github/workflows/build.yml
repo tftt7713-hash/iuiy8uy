@@ -1,4 +1,4 @@
-name: Android APK Build
+name: Android APK Build Smart
 on: [push]
 
 jobs:
@@ -14,26 +14,38 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Initialize Android Project
+      - name: Smart Auto-Fix Project Structure
         run: |
-          mkdir -p app/src/main/java/com/example/myapp
-          mkdir -p app/src/main/res/layout
-          mkdir -p app/src/main/res/values
-          
-          # Create temporary gradle setup
-          gradle init --type basic
-          
-          # Base build configuration
+          # Create standard project folder
+          mkdir -p fix-project/app/src/main/java/com/example/myapp
+          mkdir -p fix-project/app/src/main/res/values
+
+          # Smart Search: Find files wherever they are hidden and copy them safely
+          find . -name "MainActivity.java" -exec cp {} fix-project/app/src/main/java/com/example/myapp/MainActivity.java \;
+          find . -name "FloatingWidgetService.java" -exec cp {} fix-project/app/src/main/java/com/example/myapp/FloatingWidgetService.java \;
+          find . -name "AndroidManifest.xml" -exec cp {} fix-project/app/src/main/AndroidManifest.xml \;
+
+          cd fix-project
+
+          # Create standard build files automatically
+          echo "include ':app'" > settings.gradle
+
           cat << 'EOF' > build.gradle
-          plugins {
-              id 'com.android.application' version '8.2.2' in file
+          buildscript {
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
           }
+          allprojects { repositories { google(); mavenCentral() } }
+          EOF
+
+          cat << 'EOF' > app/build.gradle
+          plugins { id 'com.android.application' }
           android {
               namespace 'com.example.myapp'
               compileSdk 34
               defaultConfig {
                   applicationId "com.example.myapp"
-                  minSdk 24
+                  minSdk 21
                   targetSdk 34
                   versionCode 1
                   versionName "1.0"
@@ -41,11 +53,16 @@ jobs:
           }
           EOF
 
+          # Verify files exist before compiling
+          ls -R app/src/main/
+
       - name: Build Android APK with Gradle
-        run: bash ./gradlew assembleDebug
+        run: |
+          cd fix-project
+          gradle assembleDebug
 
       - name: Upload Finished APK
         uses: actions/upload-artifact@v4
         with:
           name: FloatingTool-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: fix-project/app/build/outputs/apk/debug/app-debug.apk
