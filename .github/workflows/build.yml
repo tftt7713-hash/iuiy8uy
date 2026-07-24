@@ -1,4 +1,4 @@
-name: Android APK Build Smart
+name: Android APK Build Final
 on: [push]
 
 jobs:
@@ -14,20 +14,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Smart Auto-Fix Project Structure
+      - name: Setup Smart Android Project
         run: |
-          # Create standard project folder
-          mkdir -p fix-project/app/src/main/java/com/example/myapp
-          mkdir -p fix-project/app/src/main/res/values
+          # Standard project folder structure creation
+          mkdir -p my-app/app/src/main/java/com/example/myapp
+          mkdir -p my-app/app/src/main/res/values
 
-          # Smart Search: Find files wherever they are hidden and copy them safely
-          find . -name "MainActivity.java" -exec cp {} fix-project/app/src/main/java/com/example/myapp/MainActivity.java \;
-          find . -name "FloatingWidgetService.java" -exec cp {} fix-project/app/src/main/java/com/example/myapp/FloatingWidgetService.java \;
-          find . -name "AndroidManifest.xml" -exec cp {} fix-project/app/src/main/AndroidManifest.xml \;
+          # Smart Search: Automatically find files from your folders
+          find . -name "MainActivity.java" -exec cp {} my-app/app/src/main/java/com/example/myapp/MainActivity.java \;
+          find . -name "FloatingWidgetService.java" -exec cp {} my-app/app/src/main/java/com/example/myapp/FloatingWidgetService.java \;
+          find . -name "AndroidManifest.xml" -exec cp {} my-app/app/src/main/AndroidManifest.xml \;
 
-          cd fix-project
+          cd my-app
 
-          # Create standard build files automatically
+          # Automatic environment file setup
           echo "include ':app'" > settings.gradle
 
           cat << 'EOF' > build.gradle
@@ -53,16 +53,17 @@ jobs:
           }
           EOF
 
-          # Verify files exist before compiling
-          ls -R app/src/main/
+          # Generate official command tools automatically
+          gradle wrapper --gradle-version 8.5
 
-      - name: Build Android APK with Gradle
+      - name: Run Official Production Build
         run: |
-          cd fix-project
-          gradle assembleDebug
+          cd my-app
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-      - name: Upload Finished APK
+      - name: Download Link Generation
         uses: actions/upload-artifact@v4
         with:
           name: FloatingTool-APK
-          path: fix-project/app/build/outputs/apk/debug/app-debug.apk
+          path: my-app/app/build/outputs/apk/debug/app-debug.apk
