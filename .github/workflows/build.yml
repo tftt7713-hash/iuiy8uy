@@ -16,18 +16,105 @@ jobs:
 
       - name: Setup Smart Android Project
         run: |
-          # Standard project folder structure creation
+          # 1. Sabhi zaroori folders ko automatic create karna
           mkdir -p my-app/app/src/main/java/com/example/myapp
-          mkdir -p my-app/app/src/main/res/values
-
-          # Smart Search: Automatically find files from your folders
-          find . -name "MainActivity.java" -exec cp {} my-app/app/src/main/java/com/example/myapp/MainActivity.java \;
-          find . -name "FloatingWidgetService.java" -exec cp {} my-app/app/src/main/java/com/example/myapp/FloatingWidgetService.java \;
-          find . -name "AndroidManifest.xml" -exec cp {} my-app/app/src/main/AndroidManifest.xml \;
-
+          mkdir -p my-app/app/src/main/AndroidManifest.xml
+          
           cd my-app
 
-          # Automatic environment file setup
+          # 2. Sahi Android Manifest file generation (Fixing your Namespace error)
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://android.com"
+              package="com.example.myapp">
+              <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+              <application
+                  android:allowBackup="true"
+                  android:label="Floating Widget App"
+                  android:supportsRtl="true">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+                  <service android:name=".FloatingWidgetService" android:enabled="true" android:exported="false"/>
+              </application>
+          </manifest>
+          EOF
+
+          # 3. Floating Widget Service ka Fixed Java Code generate karna
+          cat << 'EOF' > app/src/main/java/com/example/myapp/FloatingWidgetService.java
+          package com.example.myapp;
+          import android.app.Service;
+          import android.content.Intent;
+          import android.graphics.PixelFormat;
+          import android.os.Build;
+          import android.os.IBinder;
+          import android.view.Gravity;
+          import android.view.View;
+          import android.view.WindowManager;
+
+          public class FloatingWidgetService extends Service {
+              private WindowManager windowManager;
+              private View floatingView;
+              @Override public IBinder onBind(Intent intent) { return null; }
+              @Override
+              public void onCreate() {
+                  super.onCreate();
+                  floatingView = new View(this);
+                  floatingView.setBackgroundColor(0xFF00FF00); // Green Color
+                  int layoutType;
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+                  } else {
+                      layoutType = WindowManager.LayoutParams.TYPE_PHONE;
+                  }
+                  final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+                  params.width = 150;
+                  params.height = 150;
+                  params.type = layoutType;
+                  params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                  params.format = PixelFormat.TRANSLUCENT;
+                  params.gravity = Gravity.TOP | Gravity.START;
+                  params.x = 200;
+                  params.y = 200;
+                  windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+                  if (windowManager != null) windowManager.addView(floatingView, params);
+              }
+              @Override
+              public void onDestroy() {
+                  super.onDestroy();
+                  if (windowManager != null && floatingView != null) windowManager.removeView(floatingView);
+              }
+          }
+          EOF
+
+          # 4. MainActivity generate karna (Jo user se display permission maangegi)
+          cat << 'EOF' > app/src/main/java/com/example/myapp/MainActivity.java
+          package com.example.myapp;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.provider.Settings;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+                      Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                      startActivityForResult(intent, 101);
+                  } else {
+                      startService(new Intent(this, FloatingWidgetService.class));
+                  }
+              }
+          }
+          EOF
+
+          # 5. Build system configuration settings files
           echo "include ':app'" > settings.gradle
 
           cat << 'EOF' > build.gradle
@@ -51,15 +138,18 @@ jobs:
                   versionName "1.0"
               }
           }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
           EOF
 
-          # Generate official command tools automatically
+          # 6. Gradle Wrapper tool execute and configure permissions immediately
           gradle wrapper --gradle-version 8.5
+          chmod +x gradlew
 
       - name: Run Official Production Build
         run: |
           cd my-app
-          chmod +x gradlew
           ./gradlew assembleDebug
 
       - name: Download Link Generation
