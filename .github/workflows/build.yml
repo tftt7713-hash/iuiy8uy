@@ -16,14 +16,12 @@ jobs:
 
       - name: Setup Smart Android Project
         run: |
-          # 1. Sabhi zaroori folders ko automatic create karna
+          # 1. Sabhi zaroori folders ko automatic create karna (Fixed Manifest Folder Bug)
           mkdir -p my-app/app/src/main/java/com/example/myapp
-          mkdir -p my-app/app/src/main/AndroidManifest.xml
+          mkdir -p my-app/app/src/main/res
           
-          cd my-app
-
-          # 2. Sahi Android Manifest file generation (Fixing your Namespace error)
-          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          # 2. Sahi Android Manifest file generation (Fixed Path and Schema URL)
+          cat << 'EOF' > my-app/app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://android.com"
               package="com.example.myapp">
@@ -44,7 +42,7 @@ jobs:
           EOF
 
           # 3. Floating Widget Service ka Fixed Java Code generate karna
-          cat << 'EOF' > app/src/main/java/com/example/myapp/FloatingWidgetService.java
+          cat << 'EOF' > my-app/app/src/main/java/com/example/myapp/FloatingWidgetService.java
           package com.example.myapp;
           import android.app.Service;
           import android.content.Intent;
@@ -90,8 +88,8 @@ jobs:
           }
           EOF
 
-          # 4. MainActivity generate karna (Jo user se display permission maangegi)
-          cat << 'EOF' > app/src/main/java/com/example/myapp/MainActivity.java
+          # 4. MainActivity generate karna
+          cat << 'EOF' > my-app/app/src/main/java/com/example/myapp/MainActivity.java
           package com.example.myapp;
           import android.content.Intent;
           import android.net.Uri;
@@ -115,9 +113,9 @@ jobs:
           EOF
 
           # 5. Build system configuration settings files
-          echo "include ':app'" > settings.gradle
+          echo "include ':app'" > my-app/settings.gradle
 
-          cat << 'EOF' > build.gradle
+          cat << 'EOF' > my-app/build.gradle
           buildscript {
               repositories { google(); mavenCentral() }
               dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
@@ -125,7 +123,7 @@ jobs:
           allprojects { repositories { google(); mavenCentral() } }
           EOF
 
-          cat << 'EOF' > app/build.gradle
+          cat << 'EOF' > my-app/app/build.gradle
           plugins { id 'com.android.application' }
           android {
               namespace 'com.example.myapp'
@@ -144,6 +142,7 @@ jobs:
           EOF
 
           # 6. Gradle Wrapper tool execute and configure permissions immediately
+          cd my-app
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
 
