@@ -20,7 +20,7 @@ jobs:
           mkdir -p my-app/app/src/main/java/com/example/myapp
           mkdir -p my-app/app/src/main/res/values
           
-          # 2. Sahi Android Manifest file generation with correct XML Namespace
+          # 2. Sahi Android Manifest file generation with correct XML Namespace Schema
           cat << 'EOF' > my-app/app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://github.com"
@@ -41,7 +41,7 @@ jobs:
           </manifest>
           EOF
 
-          # Basic styles/strings generate karna taaki theme error na aaye
+          # Theme error se bachne ke liye bas ek simple strings file
           echo '<resources><string name="app_name">Floating App</string></resources>' > my-app/app/src/main/res/values/strings.xml
 
           # 3. Floating Widget Service ka complete Java Code
@@ -115,13 +115,13 @@ jobs:
           }
           EOF
 
-          # 5. Build system configuration Settings & Gradle Fixes
+          # 5. Build system configuration Settings & Stable Gradle Matrix Setup
           echo "include ':app'" > my-app/settings.gradle
 
           cat << 'EOF' > my-app/build.gradle
           buildscript {
               repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
+              dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
           }
           allprojects { repositories { google(); mavenCentral() } }
           EOF
@@ -140,21 +140,19 @@ jobs:
               }
           }
           dependencies {
-              // Stable version dependencies compile error se bachne ke liye
               implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'com.google.android.material:material:1.11.0'
           }
           EOF
 
-          # 6. Gradle Wrapper execution aur environment update
+          # 6. Compatible Gradle Wrapper Version installation
           cd my-app
-          gradle wrapper --gradle-version 8.5
+          gradle wrapper --gradle-version 8.1
           chmod +x gradlew
 
       - name: Run Official Production Build
         run: |
           cd my-app
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Download Link Generation
         uses: actions/upload-artifact@v4
