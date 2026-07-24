@@ -15,20 +15,32 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Check karna ki kya screen alert layout pehle se allow hai
+        // 1. Check karna ki kya overlay permission pehle se hai
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-            // Settings manager open karna permission activate karne ke liye
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, OVERLAY_PERMISSION_REQ_CODE);
+            try {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, OVERLAY_PERMISSION_REQ_CODE);
+            } catch (Exception e) {
+                // Kuch devices me package name ke bina intent kholna padta hai
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                startActivityForResult(intent, OVERLAY_PERMISSION_REQ_CODE);
+            }
         } else {
             startFloatingService();
         }
     }
 
     private void startFloatingService() {
-        startService(new Intent(MainActivity.this, FloatingWidgetService.class));
-        finish(); // Main page interface ko background background thread se terminate karna
+        Intent intent = new Intent(MainActivity.this, FloatingWidgetService.class);
+        
+        // 🔥 FIX: Android 8.0 (Oreo) aur upar ke liye startForegroundService zaroori hai
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+        finish(); 
     }
 
     @Override
