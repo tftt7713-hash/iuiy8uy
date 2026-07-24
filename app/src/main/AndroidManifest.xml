@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Background Overlay Service (Zaroori hai) -->
+        <!-- Background Overlay Service -->
         <service android:name=".FloatingWidgetService"
             android:enabled="true"
             android:exported="false"/>
