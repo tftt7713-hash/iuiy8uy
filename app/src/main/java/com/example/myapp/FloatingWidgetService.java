@@ -3,6 +3,7 @@ package com.example.myapp;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.IBinder;
 import android.view.Gravity;
 import android.view.View;
@@ -21,38 +22,47 @@ public class FloatingWidgetService extends Service {
     public void onCreate() {
         super.onCreate();
         
-        // Screen ke upar render hone wala view context element setup karna
+        // 1. Screen ke upar render hone wala view setup
         floatingView = new View(this);
-        // Iska UI background color green (Hara) rakh rahe hain
-        floatingView.setBackgroundColor(0xFF00FF00); 
+        floatingView.setBackgroundColor(0xFF00FF00); // Pure Green Color
 
+        // 2. Layout Type define karna naye aur purane android versions ke liye
         int layoutType;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         } else {
-            layoutType = WindowManager.LayoutParams.TYPE_PHONE;
+            // Safe fallback for older versions
+            @SuppressWarnings("deprecation")
+            int oldType = WindowManager.LayoutParams.TYPE_PHONE;
+            layoutType = oldType;
         }
 
-        // Layout variables size setup pixels aur flags configuration
-        final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                150, // width configuration size
-                150, // height configuration size
-                layoutType,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, // Taki baaki touches piche transfer ho sakein
-                PixelFormat.TRANSLUCENT
-        );
+        // 3. Layout Parameters set karne ka sabse safe aur 100% working tarika
+        final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.width = 150;  // Width in pixels
+        params.height = 150; // Height in pixels
+        params.type = layoutType;
+        params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        params.format = PixelFormat.TRANSLUCENT;
 
-        params.gravity = Gravity.TOP | Gravity.LEFT;
+        // Gravity.LEFT ko Gravity.START se replace kiya (Modern Standard)
+        params.gravity = Gravity.TOP | Gravity.START;
         params.x = 200;
         params.y = 200;
 
+        // 4. Window Manager initialize karke view add karna
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        windowManager.addView(floatingView, params);
+        if (windowManager != null) {
+            windowManager.addView(floatingView, params);
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (floatingView != null) windowManager.removeView(floatingView);
+        // Safe removal check taaki NullPointerException na aaye
+        if (windowManager != null && floatingView != null) {
+            windowManager.removeView(floatingView);
+        }
     }
 }
