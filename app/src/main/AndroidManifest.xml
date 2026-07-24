@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://android.com"
+<manifest xmlns:android="http://github.com"
+    xmlns:android="http://android.com"
     package="com.example.myapp">
 
     <!-- Screen par overlay draw karne ki permission -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    
+    <!-- 🔥 FIX: Android 9 (Pie) aur upar ke liye yeh permission zaroori hai -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
         android:allowBackup="true"
