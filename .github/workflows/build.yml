@@ -14,13 +14,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # Standard build tool installation bina system dependency ke
+      - name: Setup Gradle System
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Setup Smart Android Project
         run: |
-          # 1. Folders structure setup bina kisi file/folder conflict ke
+          # 1. Folders structure setup
           mkdir -p my-app/app/src/main/java/com/example/myapp
           mkdir -p my-app/app/src/main/res/values
           
-          # 2. Sahi Android Manifest file generation with correct XML Namespace Schema
+          # 2. Sahi Android Manifest file generation
           cat << 'EOF' > my-app/app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://github.com"
@@ -41,7 +45,7 @@ jobs:
           </manifest>
           EOF
 
-          # Theme error se bachne ke liye bas ek simple strings file
+          # Android theme configuration error se bachne ke liye string resources
           echo '<resources><string name="app_name">Floating App</string></resources>' > my-app/app/src/main/res/values/strings.xml
 
           # 3. Floating Widget Service ka complete Java Code
@@ -115,7 +119,7 @@ jobs:
           }
           EOF
 
-          # 5. Build system configuration Settings & Stable Gradle Matrix Setup
+          # 5. Build system configuration Settings
           echo "include ':app'" > my-app/settings.gradle
 
           cat << 'EOF' > my-app/build.gradle
@@ -144,15 +148,10 @@ jobs:
           }
           EOF
 
-          # 6. Compatible Gradle Wrapper Version installation
-          cd my-app
-          gradle wrapper --gradle-version 8.1
-          chmod +x gradlew
-
       - name: Run Official Production Build
         run: |
           cd my-app
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          gradle assembleDebug --no-daemon
 
       - name: Download Link Generation
         uses: actions/upload-artifact@v4
